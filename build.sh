@@ -34,13 +34,6 @@ while getopts "nhr?" opt; do
     esac
 done
 
-# the defaults for ubuntu
-java_home_arg="/usr/lib/jvm/java-17-openjdk-amd64"
-if [ "${base_image}" = "alpine" ]
-then
-	java_home_arg="/usr/lib/jvm/default-jvm"
-fi
-
 dist_info="N/A"
 dist_info="$([ -e midpoint-dist-${tag}.tar.gz.info ] && cat midpoint-dist-${tag}.tar.gz.info)"
 
@@ -51,7 +44,8 @@ echo "${dist_info}"
 echo " - - - - - - - - - - - - - - - - -"
 
 if [ ${SKIP_DOWNLOAD} -eq 0 -o ! -e midpoint-dist-${tag}.tar.gz ]; then ./download-midpoint "${tag}" "midpoint-dist-${tag}.tar.gz" || exit 1; fi
-docker build ${REFRESH} --network host --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
+#docker buildx build --platform linux/amd64,linux/arm64 ${REFRESH} --network host --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
+docker buildx build --platform linux/amd64,linux/arm64 ${REFRESH} --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
 	--build-arg maintainer="${maintainer}" \
 	--build-arg imagename="${imagename}" \
 	--build-arg SKIP_DOWNLOAD=1 \
@@ -60,7 +54,6 @@ docker build ${REFRESH} --network host --tag ${maintainer}/${imagename}:${docker
 	--build-arg MP_VERSION=${tag} \
 	--build-arg base_image="${base_image}" \
 	--build-arg base_image_tag="${base_image_tag}" \
-	--build-arg java_home="${java_home_arg}" \
 	. || exit 1
 if [ ${SKIP_DOWNLOAD} -eq 0 ]; then
 	[ -e "midpoint-dist-${tag}.tar.gz" ] && rm "midpoint-dist-${tag}.tar.gz"
