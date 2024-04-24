@@ -7,6 +7,7 @@ ARG maintainer=evolveum
 ARG imagename=midpoint
 ARG JAVA_VERSION=17
 
+
 ### values for Ubuntu based image ###
 #ARG base_image=ubuntu
 #ARG base_image_tag=22.04
@@ -85,9 +86,29 @@ ENV MP_SET_midpoint_repository_database=h2 \
  TZ=UTC \
  MP_DIR=${MP_DIR}
 
+
+ENV USER=midpoint
+ENV GROUP=midpoint
+
+
+RUN if [ "${base_image}" = "alpine" ]; \
+    then mkdir -p ${MP_DIR} && \
+         addgroup -g 12345 "${GROUP}" && \
+         adduser -D -g "${USER}" -h "${MP_DIR}" -H -s "/bin/sh" -G "${GROUP}" "${USER}" && \         
+         chown -R ${USER}:${GROUP} ${MP_DIR} ; \
+    else useradd -ms /bin/bash midpoint && \
+         mkdir -p ${MP_DIR} && \
+         chown -R midpoint:midpoint ${MP_DIR} ; \
+    fi; 
+
+
+USER ${USER} 
+
 COPY container_files/usr-local-bin/* /usr/local/bin/
 
 COPY --from=0 ${MP_DIR} ${MP_DIR}/
+
+USER root
 
 RUN if [ "${base_image}" = "ubuntu" ]; \
   then sed 's/main$/main universe/' -i /etc/apt/sources.list && \
@@ -103,6 +124,10 @@ RUN if [ "${base_image}" = "ubuntu" ]; \
   echo -n "export JAVA_HOME=" >> "${MP_DIR}/bin/setenv.sh" ; \
   find /usr/lib/jvm -maxdepth 1 -name "*openjdk*" -name "*${JAVA_VERSION}*" -type d | head -1 >> ${MP_DIR}/bin/setenv.sh ; \
   echo "[ \$(echo \${PATH} | grep -c openjdk) -eq 0 ] && PATH=\${PATH}:\${JAVA_HOME}/bin" >>${MP_DIR}/bin/setenv.sh
+
+RUN chown -R midpoint:midpoint /opt/midpoint
+
+USER ${USER}
 
 VOLUME ${MP_DIR}/var
 

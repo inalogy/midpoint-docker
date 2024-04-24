@@ -45,7 +45,7 @@ echo " - - - - - - - - - - - - - - - - -"
 
 if [ ${SKIP_DOWNLOAD} -eq 0 -o ! -e midpoint-dist-${tag}.tar.gz ]; then ./download-midpoint "${tag}" "midpoint-dist-${tag}.tar.gz" || exit 1; fi
 #docker buildx build --platform linux/amd64,linux/arm64 ${REFRESH} --network host --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
-docker buildx build --platform linux/amd64,linux/arm64 ${REFRESH} --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
+docker buildx build --platform linux/amd64,linux/arm64 --push ${REFRESH} --tag ${maintainer}/${imagename}:${docker_image_tag:-${tag}-${base_image}} \
 	--build-arg maintainer="${maintainer}" \
 	--build-arg imagename="${imagename}" \
 	--build-arg SKIP_DOWNLOAD=1 \
