@@ -6,6 +6,7 @@ ARG SKIP_DOWNLOAD=0
 ARG maintainer=evolveum
 ARG imagename=midpoint
 ARG JAVA_VERSION=17
+ARG graphql_connector_tag=1.2.0.0
 
 
 ### values for Ubuntu based image ###
@@ -30,6 +31,7 @@ ARG MP_VERSION
 ARG MP_DIR
 ARG MP_DIST_FILE
 ARG SKIP_DOWNLOAD
+ARG graphql_connector_tag=1.2.0.0
 
 RUN if [ "${base_image}" = "ubuntu" ]; \
   then apt-get update -y && apt-get install -y curl libxml2-utils ; \
@@ -38,6 +40,7 @@ RUN if [ "${base_image}" = "ubuntu" ]; \
   fi ; fi
 
 COPY download-midpoint map_midpoint-docker.csv common.bash ${MP_DIST_FILE}* ${MP_DIR}/
+COPY connector-msgraph-${graphql_connector_tag}.jar ${MP_DIR}/var/icf-connectors/
 
 RUN if [ "${SKIP_DOWNLOAD}" = "0" ]; \
   then chmod 755 ${MP_DIR}/download-midpoint && \
@@ -110,6 +113,7 @@ COPY --from=0 ${MP_DIR} ${MP_DIR}/
 
 USER root
 
+
 RUN if [ "${base_image}" = "ubuntu" ]; \
   then sed 's/main$/main universe/' -i /etc/apt/sources.list && \
        apt-get update -y && \
@@ -126,6 +130,17 @@ RUN if [ "${base_image}" = "ubuntu" ]; \
   echo "[ \$(echo \${PATH} | grep -c openjdk) -eq 0 ] && PATH=\${PATH}:\${JAVA_HOME}/bin" >>${MP_DIR}/bin/setenv.sh
 
 RUN chown -R midpoint:midpoint /opt/midpoint
+
+
+COPY ./cert/ca.pem /usr/lib/jvm/java-17-openjdk/lib/security/
+RUN keytool -keystore /usr/lib/jvm/java-17-openjdk/lib/security/cacerts \
+    -storepass changeit \
+    -import \
+    -noprompt \
+    -alias inalogy-pem \
+    -trustcacerts -file /usr/lib/jvm/java-17-openjdk/lib/security/ca.pem && \
+    rm -rf /usr/lib/jvm/java-17-openjdk/lib/security/ca.pem
+
 
 USER ${USER}
 
