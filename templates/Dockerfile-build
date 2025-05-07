@@ -1,0 +1,20 @@
+ARG base_image=alpine
+ARG base_image_tag=latest
+
+FROM ${base_image}:${base_image_tag}
+
+COPY templates/build_files/download_crane /opt/download_crane
+
+COPY templates/build_files/prepare_layer /usr/local/bin/prepare_layer
+
+RUN /bin/sh /opt/download_crane
+
+FROM ${base_image}:${base_image_tag}
+
+COPY download-midpoint map_midpoint-docker.csv common.bash /opt/midpoint/
+
+COPY --from=0 /usr/local/bin/* /usr/local/bin
+
+RUN apk --update add --no-cache libxml2-utils curl bash ; \
+  chown root:root /usr/local/bin/* ; \
+  chmod +x /usr/local/bin/*
