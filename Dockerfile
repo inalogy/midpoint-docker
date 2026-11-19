@@ -147,7 +147,14 @@ RUN echo "fix for starting midpoint around release 4.2..." ; \
   mkdir -p ${MP_DIR}/var && chown -R midpoint:midpoint ${MP_DIR}
 
 COPY --from=0 ${MP_DIR} ${MP_DIR}/
-RUN chown -R midpoint:midpoint ${MP_DIR}
+RUN chown -R midpoint:midpoint ${MP_DIR} && \
+  chmod 755 ${MP_DIR}/lib/midpoint.war && \
+  chmod 755 ${MP_DIR}/lib/ninja.jar && \
+  chmod 755 ${MP_DIR}/bin/midpoint.sh && \
+  chmod 755 ${MP_DIR}/bin/setenv.sh && \
+  chmod 755 ${MP_DIR}/bin/ninja.sh && \
+  chmod 755 ${MP_DIR}/bin/start.sh && \
+  chmod 755 ${MP_DIR}/bin/stop.sh
 
 # Switch to non-privileged user
 USER midpoint
